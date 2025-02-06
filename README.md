@@ -1,13 +1,10 @@
-# openai-slack-bot
+# umbrageai-slack-bot
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jack482653/openai-slack-bot/workflow.yml?label=Test%20%26%20Build&style=for-the-badge)
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/jack482653/openai-slack-bot?label=Version&style=for-the-badge)
+Forked from #openai-slack-bot
 
-A Slack bot that uses the OpenAI API to generate responses and images based on user prompts.
+A Slack bot that uses LLMs to generate responses and images based on user prompts.
 
 Inspired by [@kvzhuang](https://gist.github.com/kvzhuang). Original source code can be found [here](https://gist.github.com/kvzhuang/357b83499d3edcc099512d47a4a1b646).
-
-This document is polished by ChatGPT :P .
 
 # Functions
 
@@ -19,13 +16,7 @@ This document is polished by ChatGPT :P .
 
 <img width="372" alt="image" src="https://user-images.githubusercontent.com/6816342/223357511-91ceb512-8773-4fbd-879f-dce599cf9dd2.png">
 
-- Generate an image based on a prompt:
-```
-/gen_image [prompt]
-```
-<img width="693" alt="image" src="https://user-images.githubusercontent.com/6816342/209779765-bd0892e9-fded-4a80-9d7c-4c0b3933accb.png">
-
-- Summary the thread:
+- Summarize the thread:
 
 <img width="693" alt="image" src="https://user-images.githubusercontent.com/6816342/226178335-291dce6b-6d5e-4cb2-bcc4-832711b764ae.gif">
 
@@ -49,15 +40,15 @@ This is done by Slack App Manifest. You can also manually copy the manifest belo
 
 ```yaml
 display_information:
-  name: OpenAI Chat
-  description: An OpenAI Slack bot
+  name: Umbrage.AI
+  description: An ai-powered slack bot for Umbrage.
 features:
   app_home:
     home_tab_enabled: false
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
   bot_user:
-    display_name: OpenAI Chat
+    display_name: Umbrage.AI
     always_online: true
   shortcuts:
     - name: Summarize...
@@ -68,11 +59,6 @@ features:
       type: message
       callback_id: ask
       description: Ask the question in the thread
-  slash_commands:
-    - command: /gen_image
-      description: Generate image from OpenAI
-      usage_hint: "[a white siamese cat]"
-      should_escape: false
 oauth_config:
   scopes:
     bot:
