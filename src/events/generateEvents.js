@@ -3,7 +3,6 @@ const EVENTS = [
   "ask",
   "fate",
   "generateEvents",
-  "genImage",
   "message",
   "summarize",
 ];

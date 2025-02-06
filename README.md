@@ -2,7 +2,7 @@
 
 Forked from #openai-slack-bot
 
-A Slack bot that uses LLMs to generate responses and images based on user prompts.
+A Slack bot that uses LLMs to generate responses based on user prompts.
 
 Inspired by [@kvzhuang](https://gist.github.com/kvzhuang). Original source code can be found [here](https://gist.github.com/kvzhuang/357b83499d3edcc099512d47a4a1b646).
 

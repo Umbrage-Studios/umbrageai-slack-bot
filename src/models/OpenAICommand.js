@@ -187,22 +187,6 @@ class OpenAICommand {
 
     return res.choices[0].message.content;
   }
-
-  async generateImage(prompt) {
-    logger.debug("Create image parameters: ", prompt);
-
-    const res = await this.openAIApi.images.generate({
-      model: this.config.image.model,
-      prompt: prompt,
-      size: this.config.image.size,
-      quality: this.config.image.quality,
-      response_format: "b64_json",
-    });
-
-    logger.debug("Create image response: ", res);
-
-    return res.data[0].b64_json;
-  }
 }
 
 module.exports = OpenAICommand;
