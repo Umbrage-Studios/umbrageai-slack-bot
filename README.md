@@ -64,6 +64,8 @@ oauth_config:
     bot:
       - app_mentions:read
       - channels:history
+      - channels:read
+      - channels:join
       - chat:write
       - chat:write.customize
       - chat:write.public

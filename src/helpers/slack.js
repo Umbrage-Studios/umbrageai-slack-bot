@@ -1,3 +1,6 @@
+const { log4js } = require("#configs/logger");
+const logger = log4js.getLogger("slack");
+
 const pagination = (func, params, key) => {
   const limit = 1000;
   const options = {
@@ -47,7 +50,40 @@ const getThreadMessages = async (channelId, threadTs, { client, cache }) => {
   return messages;
 };
 
+const joinPublicChannels = async (client) => {
+  try {
+    // Get all public channels
+    const publicChannels = await pagination(
+      client.conversations.list,
+      {
+        exclude_archived: true,
+        types: 'public_channel'
+      },
+      "channels"
+    );
+
+    // Join each channel
+    for (const channel of publicChannels) {
+      try {
+        await client.conversations.join({ channel: channel.id });
+        logger.debug(`Successfully joined channel: ${channel.name}`);
+      } catch (error) {
+        // If we're already in the channel, that's fine - ignore the error
+        if (error.data?.error === 'already_in_channel') {
+          logger.debug(`Already in channel: ${channel.name}`);
+          continue;
+        }
+        logger.error(`Failed to join channel ${channel.name}:`, error);
+      }
+    }
+  } catch (error) {
+    logger.error('Failed to list or join channels:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   pagination,
   getThreadMessages,
+  joinPublicChannels
 };

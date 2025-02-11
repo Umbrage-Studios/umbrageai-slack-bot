@@ -1,6 +1,7 @@
 const app = require("#configs/app");
 const { appLogger: logger } = require("#configs/logger");
 const generateEvents = require("#events/generateEvents");
+const { joinPublicChannels } = require("#helpers/slack");
 
 generateEvents();
 
@@ -26,6 +27,15 @@ process.on("unhandledRejection", (error) => {
 (async () => {
   // Start your app
   await app.start();
+
+  // Join all public channels
+  try {
+    await joinPublicChannels(app.client);
+    logger.log("🎉 Joined all accessible public channels!");
+  } catch (error) {
+    logger.error("Failed to join public channels:", error);
+    // Don't exit - the bot can still function without joining all channels
+  }
 
   logger.log("⚡️ Bolt app is running!");
   logger.log("log level: ", logger.level);

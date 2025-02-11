@@ -100,7 +100,26 @@ app.shortcut("ask", async ({ shortcut, ack, client }) => {
 
     await client.chat.postMessage({
       channel: channelId,
-      text: "Oops, something went wrong to summarize thread 😭. Please try again later.",
+      thread_ts: threadTs,
+      text: "Oops, something went wrong opening the ask dialog 😭. Please try again later.",
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "Oops, something went wrong opening the ask dialog 😭. Please try again later.",
+          }
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `Error: \`${error.message || 'Unknown error'}\``
+            }
+          ]
+        }
+      ],
     });
   }
 });
@@ -117,6 +136,14 @@ app.view("ask_submission", async ({ ack, body, client }) => {
 
   try {
     await ack();
+
+    // Send loading message
+    const loadingMessage = await client.chat.postMessage({
+      channel: channelId,
+      thread_ts: threadTs,
+      text: "Processing your question... 🤔",
+    });
+
     const messages = await getThreadMessages(channelId, threadTs, {
       client,
       cache,
@@ -126,31 +153,54 @@ app.view("ask_submission", async ({ ack, body, client }) => {
       question,
       messages
     );
-    const { permalink } = await client.chat.getPermalink({
+
+    // Delete loading message
+    await client.chat.delete({
       channel: channelId,
-      message_ts: threadTs,
+      ts: loadingMessage.ts,
     });
+
     await client.chat.postMessage({
       channel: channelId,
+      thread_ts: threadTs,
       text: `Question: ${question}\nAnswer: ${answer}`,
       blocks: [
         {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `Question: ${question}\nAnswer: ${answer}\n\n*<${permalink}|Go to original thread>*`,
+            text: `*Question:*\n${question}\n\n*Answer:*\n${answer}`,
           },
         },
       ],
     });
 
-    logger.debug("/summarize completed");
+    logger.debug("/ask completed");
   } catch (error) {
     logger.error(error);
 
     await client.chat.postMessage({
       channel: channelId,
-      text: "Oops, something went wrong to summarize thread 😭. Please try again later.",
+      thread_ts: threadTs,
+      text: "Oops, something went wrong answering your question 😭. Please try again later.",
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "Oops, something went wrong answering your question 😭. Please try again later.",
+          }
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `Error: \`${error.message || 'Unknown error'}\``
+            }
+          ]
+        }
+      ],
     });
   }
 });

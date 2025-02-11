@@ -21,6 +21,7 @@ app.event("app_mention", async ({ event, say }) => {
 
     await say({
       text: answer,
+      thread_ts: event.thread_ts || event.ts,
       blocks: [
         {
           type: "section",
@@ -36,6 +37,27 @@ app.event("app_mention", async ({ event, say }) => {
   } catch (error) {
     logger.error(error);
 
-    await say("Oops, something went wrong 😭. Please try again later.");
+    await say({
+      text: "Oops, something went wrong 😭. Please try again later.",
+      thread_ts: event.thread_ts || event.ts,
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "Oops, something went wrong 😭. Please try again later.",
+          }
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `Error: \`${error.message || 'Unknown error'}\``
+            }
+          ]
+        }
+      ],
+    });
   }
 });
