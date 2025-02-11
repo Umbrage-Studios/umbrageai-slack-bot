@@ -129,7 +129,6 @@ settings:
         - `OPENAI_CHAT_ENABLE_MULTI`: If enabled and `OPENAI_CHAT_MODEL` supports vision, slack bot can take in images and answer questions about them in the chat.
         - `OPENAI_CHAT_NUM_OF_MESSAGES`: Number of messages bot will cache. It's used for appending previous conversioations when calling chat completions API. MUST BE EVEN. Default value: 2.
         - `OPENAI_CHAT_TTL`: The duration of time (second) that messages will be kept. Default value: null (keep forever).
-        - `OPENAI_CHAT_SYSTEM_MESSAGE`: First messsage to help set the behavior of the assistant. Default value: null.
 
 IMPORTANT: If you are using Azure as OpenAI provider, you cannot use `/gen_image` command.
 
@@ -141,11 +140,10 @@ OPENAI_OPENAI_AUTH_API_KEY=xxxxxxx
 SLACK_BOT_TOKEN=xoxb-xxxxxxx
 SLACK_SIGNING_SECRET=xxxxxx
 SLACK_APP_TOKEN=xapp-xxxxxx
-OPENAI_CHAT_MODEL=gpt-3.5-turbo
+OPENAI_CHAT_MODEL=gpt-4o-mini
 OPENAI_CHAT_ENABLE_SUMMARIZE=false
 OPENAI_CHAT_NUM_OF_MESSAGES=4
 OPENAI_CHAT_TTL=1200
-OPENAI_CHAT_SYSTEM_MESSAGE="You are a helpful assistant."
 ```
 
 # Getting Started

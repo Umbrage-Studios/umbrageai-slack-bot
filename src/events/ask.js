@@ -50,18 +50,34 @@ app.shortcut("ask", async ({ shortcut, ack, client }) => {
                 {
                   text: {
                     type: "plain_text",
-                    text: "Traditional Chinese",
-                    emoji: true,
-                  },
-                  value: "zh-TW",
-                },
-                {
-                  text: {
-                    type: "plain_text",
                     text: "English",
                     emoji: true,
                   },
                   value: "en",
+                },
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Spanish",
+                    emoji: true,
+                  },
+                  value: "es",
+                },
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Portuguese",
+                    emoji: true,
+                  },
+                  value: "pt",
+                },
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Turkish",
+                    emoji: true,
+                  },
+                  value: "tr",
                 },
               ],
               action_id: "select-lang-action",
