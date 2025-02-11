@@ -86,7 +86,26 @@ app.shortcut("summarize", async ({ shortcut, ack, client }) => {
 
     await client.chat.postMessage({
       channel: channelId,
-      text: "Oops, something went wrong to summarize thread 😭. Please try again later.",
+      ...(threadTs && { thread_ts: threadTs }),
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "Oops, something went wrong opening the summarize dialog 😭. Please try again later.",
+          }
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `Error: \`${error.message || 'Unknown error'}\``
+            }
+          ]
+        }
+      ],
+      text: "Oops, something went wrong opening the summarize dialog 😭. Please try again later.",
     });
   }
 });
@@ -102,24 +121,44 @@ app.view("summarize_submission", async ({ ack, body, client }) => {
 
   try {
     await ack();
+
+    // Send loading message
+    const loadingMessage = await client.chat.postMessage({
+      channel: channelId,
+      thread_ts: threadTs,
+      text: "Generating summary... 🤔",
+    });
+
     const messages = await getThreadMessages(channelId, threadTs, {
       client,
       cache,
     });
     const answer = await openAICommand.summarizeConversations(locale, messages);
-    const { permalink } = await client.chat.getPermalink({
+    
+    // Delete loading message
+    await client.chat.delete({
       channel: channelId,
-      message_ts: threadTs,
+      ts: loadingMessage.ts,
     });
+
+    // Get language display name
+    const languageNames = {
+      en: "English",
+      es: "Spanish",
+      pt: "Portuguese",
+      tr: "Turkish"
+    };
+
     await client.chat.postMessage({
       channel: channelId,
+      thread_ts: threadTs,
       text: `Summary: ${answer}`,
       blocks: [
         {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `Summary: ${answer}\n\n*<${permalink}|Go to original thread>*`,
+            text: `*Summary* (${languageNames[locale] || locale}):\n${answer}`,
           },
         },
       ],
@@ -129,9 +168,31 @@ app.view("summarize_submission", async ({ ack, body, client }) => {
   } catch (error) {
     logger.error(error);
 
+    // Since we're summarizing a thread, we should always have threadTs here
+    // But adding a fallback just in case
     await client.chat.postMessage({
       channel: channelId,
-      text: "Oops, something went wrong to summarize thread 😭. Please try again later.",
+      ...(threadTs && { thread_ts: threadTs }),
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "Oops, something went wrong when summarizing the thread 😭. Please try again later.",
+          }
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `Error: \`${error.message || 'Unknown error'}\``
+            }
+          ]
+        }
+      ],
+      // Fallback text for notifications
+      text: "Oops, something went wrong when summarizing the thread 😭. Please try again later.",
     });
   }
 });
