@@ -10,6 +10,9 @@ class OpenAICommand {
     this.cache = cache;
     this.config = config;
 
+    console.log('OpenAI Command Constructor', openAIApi);
+    console.log('OpenAI Command Config', config);
+
     if (!models.isValidModel(this.config.chat.model)) {
       logger.warn(
         `The model ${this.config.chat.model} is not in the list of valid models. May be it is new model or typo. Please check the model name.`
@@ -23,6 +26,9 @@ class OpenAICommand {
   }
 
   async chat(id, message, options) {
+    console.log('OpenAI Command Chat', id, message, options);
+    console.log('OpenAI Command Config', this.config);
+    console.log('OpenAI Command OpenAI API', this.openAIApi);
     // get last messages from cache
     let lastMessages = this.cache.get(`conversation-${id}`) ?? [];
     // If chat is enabled and there are enough messages to summarize, summarize the last messages
