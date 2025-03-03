@@ -54,12 +54,6 @@ const getChatContentBuilder = (openAIConfig) => {
   };
 };
 
-console.log('Provider', env.openAI.provider);
-console.log('Auth Base Path', env.openAI.auth.basePath);
-console.log('Chat Model', env.openAI.chat.model);
-console.log('Auth API Key', env.openAI.auth.apiKey);
-
-
 const openAIApi = new OpenAI(getConfig(env.openAI.provider, env.openAI.auth));
 
 const openAICommand = new OpenAICommand(openAIApi, cache, env.openAI);
