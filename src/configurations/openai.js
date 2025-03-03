@@ -58,6 +58,15 @@ const openAIApi = new OpenAI(getConfig(env.openAI.provider, env.openAI.auth));
 
 const openAICommand = new OpenAICommand(openAIApi, cache, env.openAI);
 
+// Log OpenAI configuration details
+const apiKeyFirstFour = env.openAI.auth.apiKey ? env.openAI.auth.apiKey.substring(0, 4) : 'N/A';
+logger.info(`OpenAI Configuration:
+  - Provider: ${env.openAI.provider}
+  - Model: ${env.openAI.chat.model}
+  - BasePath: ${env.openAI.auth.basePath || 'Default'}
+  - API Key (first 4 chars): ${apiKeyFirstFour}
+`);
+
 module.exports = {
   openAICommand,
   getContentBuilderInstance: getChatContentBuilder(env.openAI),
