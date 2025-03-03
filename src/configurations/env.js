@@ -19,16 +19,13 @@ const getOpenAIAuth = (provider) => {
         apiKey: process.env.OPENAI_AZURE_AUTH_API_KEY,
       };
     case providers.OPENAI:
+    default:
+      // for backward compatibility of old env settings
       return {
         basePath:
           process.env.OPENAI_OPENAI_AUTH_BASE_PATH ||
           "https://api.openai.com/v1",
         apiKey: process.env.OPENAI_OPENAI_AUTH_API_KEY,
-      };
-    default:
-      // for backward compatibility of old env settings
-      return {
-        apiKey: process.env.OPENAI_API_KEY,
       };
   }
 };
