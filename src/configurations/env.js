@@ -51,7 +51,7 @@ const getEnv = (config = {}) => {
       provider,
       auth: getOpenAIAuth(provider),
       chat: {
-        model: process.env.OPENAI_CHAT_MODEL || models.INFLECTION_3_0,
+        model: process.env.OPENAI_CHAT_MODEL || models.DEEPSEEK_R1_DISTILL_LLAMA_70B,
         enableMulti: process.env.OPENAI_CHAT_ENABLE_MULTI === "true",
         enableSummarize: process.env.OPENAI_CHAT_ENABLE_SUMMARIZE === "true",
         numOfMessages: getInt("OPENAI_CHAT_NUM_OF_MESSAGES", 2),

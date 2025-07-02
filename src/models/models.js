@@ -2,15 +2,10 @@ const Enum = require("@5x/enumjs");
 const modelTypes = require("./modelTypes");
 
 const models = new Enum();
-// Inflection AI Pi 3.0
-// * inflection-3.0
-models.defineEnumProperty("INFLECTION_3_0", "inflection-3.0", {
-  types: [modelTypes.CHAT],
-});
 
-// Inflection AI Productivity 3.0 With Tools Calling
-// * inflection-3.0-productivity
-models.defineEnumProperty("INFLECTION_3_0_PRODUCTIVITY", "inflection-3.0-productivity", {
+// Groq Compatible Models
+// DeepSeek Models
+models.defineEnumProperty("DEEPSEEK_R1_DISTILL_LLAMA_70B", "deepseek-r1-distill-llama-70b", {
   types: [modelTypes.CHAT],
 });
 
