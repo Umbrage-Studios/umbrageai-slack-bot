@@ -134,6 +134,29 @@ class OpenAICommand {
     return numOfMessages;
   }
 
+  /**
+   * Remove thinking tags and their content from the response
+   * Handles various formats like <think>, <thinking>, etc.
+   * @param {string} content - The content to clean
+   * @returns {string} - The cleaned content
+   */
+  removeThinkingTags(content) {
+    if (!content) return content;
+    
+    // Remove thinking tags with case-insensitive matching
+    // This regex matches <think>...</think>, <thinking>...</thinking>, etc.
+    const thinkingTagRegex = /<think(?:ing)?\b[^>]*>[\s\S]*?<\/think(?:ing)?\s*>/gi;
+    
+    const cleaned = content
+      .replace(thinkingTagRegex, '')  // Remove thinking tags and content
+      .trim();  // Remove leading/trailing whitespace
+    
+    logger.debug("Original content length:", content.length);
+    logger.debug("Cleaned content length:", cleaned.length);
+    
+    return cleaned;
+  }
+
   async tellMeMyFate() {
     const now = new Date();
     return await this.createSingleChatCompletion(
@@ -185,7 +208,10 @@ class OpenAICommand {
 
     logger.debug("Create chat completion response: ", res);
 
-    return res.choices[0].message.content;
+    const rawContent = res.choices[0].message.content;
+    const cleanedContent = this.removeThinkingTags(rawContent);
+    
+    return cleanedContent;
   }
 }
 
