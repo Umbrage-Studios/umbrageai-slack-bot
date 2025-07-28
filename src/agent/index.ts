@@ -148,7 +148,7 @@ export async function runSchedulingAgent(
     });
     
     return { 
-      text: result.text,
+      text: result.text + `\n\n🔧 **System Status:** ${mcpStatus}`,
       mcpStatus 
     };
   } catch (error) {
