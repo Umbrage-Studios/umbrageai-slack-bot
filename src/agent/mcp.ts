@@ -1,8 +1,11 @@
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+
 /**
  * Create MCP client with proper StreamableHTTP transport
  * This connects to the Outlook MCP server for calendar operations
  * 
- * NOTE: Now using proper ESM imports since TypeScript outputs ESM
+ * NOTE: Now using static ESM imports since TypeScript outputs ESM
  */
 export async function createMCPClient() {
   const mcpUrl = 'https://outlook-remote-mcp-server.onrender.com/mcp';
@@ -13,11 +16,7 @@ export async function createMCPClient() {
   }
   
   try {
-    // ESM imports should work now that TypeScript outputs ESM
-    const { StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp');
-    const { Client } = await import('@modelcontextprotocol/sdk/client/index');
-    
-    console.log('✅ MCP SDK modules loaded successfully');
+    console.log('✅ MCP SDK modules loaded successfully (static imports)');
     
     // Create the MCP client using the official SDK
     const client = new Client({
