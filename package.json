@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/app.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && echo '{\"type\": \"module\"}' > dist/package.json",
     "build:watch": "tsc --watch",
     "start": "npm run build && node src/app.js",
     "start:prod": "node src/app.js",

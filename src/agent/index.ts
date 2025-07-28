@@ -1,6 +1,6 @@
 import { groq } from '@ai-sdk/groq';
 import { generateText } from 'ai';
-import { createMCPClient } from './mcp';
+import { createMCPClient } from './mcp.js';
 
 /**
  * Generate system prompt with current time context and user info
@@ -23,7 +23,7 @@ function generateSystemPrompt(userContext?: UserContext): string {
   // Prepare user context for system prompt
   let userContextPrompt = "";
   if (userContext) {
-    const userName = `${userContext.firstName} ${userContext.lastName}`;
+    const userName = userContext.fullName;
     userContextPrompt = `
 SIGNED-IN USER CONTEXT:
 - Sign-in User Details: ${userName} - ${userContext.email}
@@ -95,8 +95,7 @@ Available tools:
 }
 
 export interface UserContext {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
 }
 

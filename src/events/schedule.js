@@ -1,8 +1,8 @@
 const app = require("#configs/app");
 const { appLogger: logger } = require("#configs/logger");
 
-// Import the compiled TypeScript agent with full MCP integration
-const { runSchedulingAgent } = require("../../dist/agent/index.js");
+// Import the agent wrapper that handles ESM/CommonJS compatibility
+const { getSchedulingAgent } = require("../agent/wrapper.js");
 
 /**
  * Extract user context from Slack profile with robust fallbacks
@@ -36,64 +36,40 @@ async function extractUserContext(client, userId) {
       isDeleted: user.deleted,
     });
 
-    // Smart name extraction with multiple fallbacks
-    let firstName = "";
-    let lastName = "";
+    // Simple name extraction - prioritizing real name (matches Azure AD exactly)
+    let fullName = "";
+    let nameSource = "";
 
-    if (profileFirstName && profileLastName) {
-      // Best case: explicit first/last names
-      firstName = profileFirstName;
-      lastName = profileLastName;
-    } else if (realName && realName.includes(" ")) {
-      // Second best: split real name
-      const nameParts = realName.trim().split(" ");
-      firstName = nameParts[0];
-      lastName = nameParts.slice(1).join(" ");
-    } else if (displayName && displayName.includes(" ")) {
-      // Third: split display name
-      const nameParts = displayName.trim().split(" ");
-      firstName = nameParts[0];
-      lastName = nameParts.slice(1).join(" ");
+    if (realName) {
+      // BEST: Use real name as is (matches Azure AD)
+      fullName = realName.trim();
+      nameSource = "real_name_AD_match";
+    } else if (profileFirstName && profileLastName) {
+      // Second: Combine profile first/last names
+      fullName = `${profileFirstName} ${profileLastName}`.trim();
+      nameSource = "profile_names_combined";
     } else if (profileFirstName) {
-      // Fourth: just first name
-      firstName = profileFirstName;
-      lastName = "";
-    } else if (realName) {
-      // Fifth: use real name as first name
-      firstName = realName;
-      lastName = "";
+      // Third: Just profile first name
+      fullName = profileFirstName.trim();
+      nameSource = "profile_first_only";
     } else if (displayName) {
-      // Sixth: use display name as first name
-      firstName = displayName;
-      lastName = "";
+      // Fourth: Use display name
+      fullName = displayName.trim();
+      nameSource = "display_name";
     } else {
       // Last resort: use username
-      firstName = username || "User";
-      lastName = "";
+      fullName = username || "User";
+      nameSource = "username_fallback";
     }
 
     const userContext = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      fullName: fullName,
       email: email || "",
       // Debug info for troubleshooting
       _debug: {
         userId,
         hasEmail: !!email,
-        nameSource:
-          profileFirstName && profileLastName
-            ? "profile_names"
-            : realName && realName.includes(" ")
-            ? "real_name_split"
-            : displayName && displayName.includes(" ")
-            ? "display_name_split"
-            : profileFirstName
-            ? "profile_first_only"
-            : realName
-            ? "real_name_only"
-            : displayName
-            ? "display_name_only"
-            : "username_fallback",
+        nameSource: nameSource,
         originalRealName: realName,
         originalDisplayName: displayName,
         username,
@@ -101,20 +77,19 @@ async function extractUserContext(client, userId) {
     };
 
     // Validation and warnings
-    if (!userContext.firstName) {
+    if (!userContext.fullName) {
       logger.warn("Could not extract any name for user:", userId);
     }
 
     if (!userContext.email) {
       logger.warn("No email found for user:", {
         userId,
-        name: `${userContext.firstName} ${userContext.lastName}`.trim(),
+        name: userContext.fullName,
       });
     }
 
     logger.debug("Final user context:", {
-      firstName: userContext.firstName,
-      lastName: userContext.lastName,
+      fullName: userContext.fullName,
       hasEmail: !!userContext.email,
       nameSource: userContext._debug.nameSource,
     });
@@ -125,8 +100,7 @@ async function extractUserContext(client, userId) {
 
     // Return minimal fallback context
     return {
-      firstName: "User",
-      lastName: "",
+      fullName: "User",
       email: "",
       _debug: {
         userId,
@@ -173,7 +147,11 @@ app.command("/schedule", async ({ command, ack, client, respond }) => {
         nameSource: userContext._debug?.nameSource,
       },
     });
-    const agentResult = await runSchedulingAgent(scheduleText, userContext);
+    const agent = await getSchedulingAgent();
+    const agentResult = await agent.runSchedulingAgent(
+      scheduleText,
+      userContext
+    );
     const response = agentResult.text;
 
     // Send the response
@@ -279,7 +257,11 @@ app.view("schedule_submission", async ({ ack, body, client }) => {
       scheduleText,
       user_context,
     });
-    const agentResult = await runSchedulingAgent(scheduleText, user_context);
+    const agent = await getSchedulingAgent();
+    const agentResult = await agent.runSchedulingAgent(
+      scheduleText,
+      user_context
+    );
 
     // Post result to channel or DM
     const targetChannel = channel_id || body.user.id; // Use channel or DM to user
