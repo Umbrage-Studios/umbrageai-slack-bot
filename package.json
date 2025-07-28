@@ -13,6 +13,9 @@
   },
   "author": "Kevin Zhuang",
   "license": "BSD-3-Clause",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "imports": {
     "#configs/*": "./src/configurations/*.js",
     "#errors/*": "./src/errors/*.js",

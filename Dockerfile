@@ -1,4 +1,4 @@
-FROM node:18.12.0-alpine
+FROM node:22-alpine
 
 # Copy package files first for better Docker layer caching
 COPY ./package.json /opt/openai-slack-bot/
