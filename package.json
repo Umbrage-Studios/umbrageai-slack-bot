@@ -4,7 +4,11 @@
   "description": "",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "start": "npm run build && node src/app.js",
+    "start:prod": "node src/app.js",
+    "dev": "npm run build:watch & nodemon src/app.js",
     "test": "mocha"
   },
   "author": "Kevin Zhuang",
@@ -18,18 +22,25 @@
   },
   "dependencies": {
     "@5x/enumjs": "^1.0.6",
-    "@slack/bolt": "^3.12.2",
+    "@ai-sdk/groq": "^2.0.0-beta.9",
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "@slack/bolt": "^4.4.0",
+    "ai": "^5.0.0-beta.29",
     "axios": "^1.7.2",
     "dotenv": "^16.0.3",
     "log4js": "^6.8.0",
     "node-cache": "^5.1.2",
     "openai": "^4.14.0",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "chai": "^4.3.7",
     "mocha": "^10.2.0",
+    "nodemon": "^3.0.0",
     "prettier": "2.8.1",
-    "sinon": "^15.1.2"
+    "sinon": "^15.1.2",
+    "typescript": "^5.0.0"
   }
 }

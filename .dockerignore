@@ -1,0 +1,44 @@
+# Dependencies (will be installed in container)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output (will be generated in container)
+dist/
+
+# Development files
+.git/
+.github/
+.vscode/
+*.md
+AGENT_PIVOT.md
+README.md
+
+# Test files
+.mocharc.json
+test/
+**/*.test.js
+**/*.test.ts
+
+# Environment and config files (should be provided via env vars)
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Other
+.DS_Store
+.prettierrc.json
