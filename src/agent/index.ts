@@ -167,7 +167,7 @@ Sorry, I encountered an issue processing your scheduling request.
 2. Being more specific about time and attendees
 3. Contacting support if the issue persists
 
-**Example format:** "Schedule a team meeting with John and Sarah tomorrow at 2pm EST"`,
+**Example format:** "/schedule team meeting with John and Sarah tomorrow at 2pm EST"`,
       mcpStatus
     };
   } finally {

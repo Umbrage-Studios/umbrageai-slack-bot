@@ -69,8 +69,8 @@ app.command("/schedule", async ({ command, ack, client, respond }) => {
 });
 
 // Also handle the schedule command as a shortcut from messages
-app.shortcut("schedule_meeting", async ({ shortcut, ack, client }) => {
-  logger.debug("schedule_meeting shortcut", shortcut);
+app.shortcut("schedule", async ({ shortcut, ack, client }) => {
+  logger.debug("schedule shortcut", shortcut);
 
   try {
     await ack();
