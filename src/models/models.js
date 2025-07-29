@@ -5,7 +5,15 @@ const models = new Enum();
 
 // Groq Compatible Models
 // DeepSeek Models
-models.defineEnumProperty("DEEPSEEK_R1_DISTILL_LLAMA_70B", "deepseek-r1-distill-llama-70b", {
+models.defineEnumProperty(
+  "DEEPSEEK_R1_DISTILL_LLAMA_70B",
+  "deepseek-r1-distill-llama-70b",
+  {
+    types: [modelTypes.CHAT],
+  }
+);
+
+models.defineEnumProperty("QWEN_32B", "qwen-32b", {
   types: [modelTypes.CHAT],
 });
 
