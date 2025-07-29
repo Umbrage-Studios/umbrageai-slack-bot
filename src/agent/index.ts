@@ -1,6 +1,191 @@
 import { groq } from '@ai-sdk/groq';
-import { generateText } from 'ai';
-import { createMCPClient } from './mcp.js';
+import { generateText, experimental_createMCPClient } from 'ai';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { z } from 'zod';
+
+/**
+ * Timezone conversion tool - simplified for beta AI SDK compatibility
+ */
+const timezoneConversionTool = {
+  description: 'Convert datetime between timezones',
+  parameters: z.object({
+    datetime_str: z.string(),
+    from_timezone: z.string(),
+    to_timezone: z.string(),
+  }),
+  execute: async (params: any) => {
+    const { datetime_str, from_timezone, to_timezone } = params;
+    try {
+      // Normalize timezone names
+      const timezoneMap: Record<string, string> = {
+        'eastern': 'America/New_York',
+        'central': 'America/Chicago', 
+        'pacific': 'America/Los_Angeles',
+        'utc': 'UTC',
+        'est': 'America/New_York',
+        'cst': 'America/Chicago',
+        'pst': 'America/Los_Angeles',
+      };
+      
+      const fromTz = timezoneMap[from_timezone.toLowerCase()] || from_timezone;
+      const toTz = timezoneMap[to_timezone.toLowerCase()] || to_timezone;
+      
+      // Parse the input datetime
+      let inputDate: Date;
+      if (datetime_str.includes('T') || datetime_str.includes('Z')) {
+        // ISO format
+        inputDate = new Date(datetime_str);
+      } else {
+        // "YYYY-MM-DD HH:MM:SS" format - assume it's in the source timezone
+        inputDate = new Date(datetime_str + (fromTz === 'UTC' ? 'Z' : ''));
+      }
+      
+      if (isNaN(inputDate.getTime())) {
+        return { error: `Invalid datetime format: ${datetime_str}` };
+      }
+      
+      // Convert to target timezone
+      const converted = new Intl.DateTimeFormat('en-CA', {
+        timeZone: toTz,
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).formatToParts(inputDate);
+      
+      const convertedStr = `${converted.find(p => p.type === 'year')?.value}-${converted.find(p => p.type === 'month')?.value}-${converted.find(p => p.type === 'day')?.value} ${converted.find(p => p.type === 'hour')?.value}:${converted.find(p => p.type === 'minute')?.value}:${converted.find(p => p.type === 'second')?.value}`;
+      
+      // For UTC output, add Z suffix for ISO format
+      const result = toTz === 'UTC' ? convertedStr.replace(' ', 'T') + 'Z' : convertedStr;
+      
+      return {
+        original: datetime_str,
+        from_timezone: fromTz,
+        to_timezone: toTz,
+        converted: result,
+        iso_format: toTz === 'UTC' ? result : new Date(result).toISOString()
+      };
+    } catch (error) {
+      return { error: `Timezone conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+  },
+};
+
+/**
+ * Create and run the scheduling agent with MCP integration
+ */
+export async function runSchedulingAgent(
+  userInput: string,
+  userContext?: UserContext
+): Promise<{ text: string; mcpStatus?: string }> {
+  let mcpClient: any = null;
+  let mcpStatus = "Not connected";
+  
+  try {
+    // Start with timezone conversion tool
+    const tools: Record<string, any> = {
+      convert_timezone: timezoneConversionTool,
+    };
+    
+    // Try to create MCP client for calendar integration
+    try {
+      // Use StreamableHTTPClientTransport for the streamable HTTP MCP server
+      const httpTransport = new StreamableHTTPClientTransport(
+        new URL('https://outlook-remote-mcp-server.onrender.com/mcp'),
+        {
+          sessionId: 'slack_agent_' + Date.now(),
+          requestInit: {
+            headers: {
+              'X-API-KEY': process.env.API_KEY || '',
+              'Content-Type': 'application/json',
+            },
+          },
+        }
+      );
+      
+      mcpClient = await experimental_createMCPClient({
+        transport: httpTransport,
+      });
+      
+      mcpStatus = "✅ Connected - calendar operations available";
+      console.log('✅ MCP client connected successfully');
+      
+      // Get MCP tools using the built-in tools() method
+      try {
+        const mcpTools = await mcpClient.tools();
+        console.log(`✅ MCP tools available: ${Object.keys(mcpTools).join(', ')}`);
+        
+        // Merge MCP tools with our timezone tool
+        Object.assign(tools, mcpTools);
+        
+        mcpStatus = `✅ Connected with tools: ${Object.keys(tools).join(', ')}`;
+      } catch (error) {
+        console.warn('⚠️ Failed to get MCP tools:', error);
+        mcpStatus = "⚠️ Connected but MCP tools unavailable - only timezone conversion available";
+      }
+    } catch (error) {
+      console.warn('⚠️ MCP client connection failed:', error);
+      mcpStatus = `❌ MCP connection failed: ${error instanceof Error ? error.message : 'Unknown error'} - only timezone conversion available`;
+    }
+    
+    // Generate system prompt with current context (keeping original unchanged)
+    const systemPrompt = generateSystemPrompt(userContext);
+    
+    // Run the agent with proper AI SDK tool support
+    const result = await generateText({
+      model: groq('qwen/qwen3-32b'),
+      system: systemPrompt,
+      prompt: userInput,
+      tools, // AI SDK will handle tool calling automatically
+    });
+    
+    return { 
+      text: result.text + `\n\n🔧 **System Status:** ${mcpStatus}`,
+      mcpStatus 
+    };
+  } catch (error) {
+    console.error('❌ Error in scheduling agent:', error);
+    
+    return {
+      text: `❌ **Error Processing Request**
+
+Sorry, I encountered an issue processing your scheduling request.
+
+**Error details:** ${error instanceof Error ? error.message : 'Unknown error'}
+**MCP Status:** ${mcpStatus}
+
+**Please try:**
+1. Rephrasing your request
+2. Being more specific about time and attendees
+3. Contacting support if the issue persists
+
+**Example format:** "/schedule team meeting with John and Sarah tomorrow at 2pm EST"`,
+      mcpStatus
+    };
+  } finally {
+    // Clean up MCP client if created
+    if (mcpClient) {
+      try {
+        await mcpClient.close();
+      } catch (error) {
+        console.warn('Warning: Failed to close MCP client:', error);
+      }
+    }
+  }
+}
+
+export interface UserContext {
+  fullName: string;
+  email: string;
+}
+
+export interface AgentMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 /**
  * Generate system prompt with current time context and user info
@@ -92,91 +277,4 @@ Available tools:
 - convert_timezone(datetime_str, from_timezone, to_timezone) - timezone conversion
 - users.search - search for people in the organization by name
 - calendar.create_event, calendar.update_event, calendar.remove_event, calendar.get_availability - calendar operations`;
-}
-
-export interface UserContext {
-  fullName: string;
-  email: string;
-}
-
-export interface AgentMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-}
-
-/**
- * Create and run the scheduling agent with MCP integration
- */
-export async function runSchedulingAgent(
-  userInput: string,
-  userContext?: UserContext
-): Promise<{ text: string; mcpStatus?: string }> {
-  let mcpClient: any = null;
-  let mcpStatus = "Not connected";
-  
-  try {
-    // Try to create MCP client for calendar integration
-    try {
-      mcpClient = await createMCPClient();
-      mcpStatus = "✅ Connected - calendar operations available";
-      console.log('✅ MCP client connected successfully');
-      
-      // Test MCP tools
-      try {
-        const mcpToolsResponse = await mcpClient.listTools();
-        const mcpTools = mcpToolsResponse.tools || [];
-        console.log(`✅ MCP tools available: ${mcpTools.map((t: any) => t.name).join(', ')}`);
-        mcpStatus = `✅ Connected with ${mcpTools.length} tools: ${mcpTools.map((t: any) => t.name).join(', ')}`;
-      } catch (error) {
-        console.warn('⚠️ Failed to list MCP tools:', error);
-        mcpStatus = "⚠️ Connected but tools unavailable";
-      }
-    } catch (error) {
-      console.warn('⚠️ MCP client connection failed:', error);
-      mcpStatus = `❌ Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
-    }
-    
-    // Generate system prompt with current context - keeping original content
-    const systemPrompt = generateSystemPrompt(userContext);
-    
-    // Run the agent
-    const result = await generateText({
-      model: groq('qwen/qwen3-32b'),
-      system: systemPrompt,
-      prompt: userInput,
-    });
-    
-    return { 
-      text: result.text + `\n\n🔧 **System Status:** ${mcpStatus}`,
-      mcpStatus 
-    };
-  } catch (error) {
-    console.error('❌ Error in scheduling agent:', error);
-    
-    return {
-      text: `❌ **Error Processing Request**
-
-Sorry, I encountered an issue processing your scheduling request.
-
-**Error details:** ${error instanceof Error ? error.message : 'Unknown error'}
-**MCP Status:** ${mcpStatus}
-
-**Please try:**
-1. Rephrasing your request
-2. Being more specific about time and attendees
-3. Contacting support if the issue persists
-
-**Example format:** "/schedule team meeting with John and Sarah tomorrow at 2pm EST"`,
-      mcpStatus
-    };
-  } finally {
-    // Clean up MCP client if created
-    if (mcpClient) {
-      try {
-        await mcpClient.close();
-      } catch (error) {
-        console.warn('Warning: Failed to close MCP client:', error);
-      }
-    }
-  }
 }

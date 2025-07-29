@@ -8,7 +8,7 @@ const { getSchedulingAgent } = require("../agent/wrapper.js");
  * Extract user context from Slack profile with robust fallbacks
  * @param {Object} client - Slack client
  * @param {string} userId - Slack user ID
- * @returns {Promise<Object>} User context with firstName, lastName, email, and debug info
+ * @returns {Promise<Object>} User context with fullName, email, and debug info
  */
 async function extractUserContext(client, userId) {
   try {
@@ -141,9 +141,8 @@ app.command("/schedule", async ({ command, ack, client, respond }) => {
     logger.debug("Running Groq scheduling agent with:", {
       scheduleText,
       userContext: {
-        firstName: userContext.firstName,
-        lastName: userContext.lastName,
-        hasEmail: !!userContext.email,
+        fullName: userContext.fullName,
+        hasEmail: userContext.email || "",
         nameSource: userContext._debug?.nameSource,
       },
     });
@@ -245,9 +244,8 @@ app.view("schedule_submission", async ({ ack, body, client }) => {
     logger.debug("Schedule submission:", {
       scheduleText,
       userContext: {
-        firstName: user_context.firstName,
-        lastName: user_context.lastName,
-        hasEmail: !!user_context.email,
+        fullName: user_context.fullName,
+        hasEmail: user_context.email || "",
         nameSource: user_context._debug?.nameSource,
       },
     });
@@ -268,13 +266,13 @@ app.view("schedule_submission", async ({ ack, body, client }) => {
 
     await client.chat.postMessage({
       channel: targetChannel,
-      text: `🗓️ **Schedule Request from ${user_context.firstName} ${user_context.lastName}:**\n\n"${scheduleText}"\n\n${agentResult.text}`,
+      text: `🗓️ **Schedule Request from ${user_context.fullName}:**\n\n"${scheduleText}"\n\n${agentResult.text}`,
       blocks: [
         {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `🗓️ **Schedule Request from ${user_context.firstName} ${user_context.lastName}:**`,
+            text: `🗓️ **Schedule Request from ${user_context.fullName}:**`,
           },
         },
         {
