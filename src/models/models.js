@@ -13,7 +13,7 @@ models.defineEnumProperty(
   }
 );
 
-models.defineEnumProperty("QWEN_32B", "qwen-32b", {
+models.defineEnumProperty("QWEN_32B", "qwen/qwen-32b", {
   types: [modelTypes.CHAT],
 });
 
